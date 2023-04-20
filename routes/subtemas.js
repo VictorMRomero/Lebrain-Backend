@@ -10,7 +10,7 @@ const { obtenerSubtema, obtenerSubtemas, crearSubtema, actualizarSubtema, borrar
 
 const router = Router();
 
-//{{url}}/api/materias
+//{{url}}/api/subtemas
 
 //obtener todos los subtemas -- publico
 router.get('/', obtenerSubtemas);

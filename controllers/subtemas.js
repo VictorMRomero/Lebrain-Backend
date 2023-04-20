@@ -5,12 +5,12 @@ const {Subtema} = require('../models');
 // obtener categorias -- paginado -- total -- populate
 const obtenerSubtemas = async(req, res = response) =>{
     
-    const query = {estado:true};
+
 
     const [total, subtemas] = await Promise.all([
-        Subtema.countDocuments(query),
-        Subtema.find(query)
-            .populate('usuario', 'nombre')
+        Subtema.countDocuments(),
+        Subtema.find()
+            .populate('materia', 'nombre')
 
 
     ]);
@@ -33,7 +33,7 @@ const obtenerSubtema = async(req, res = response) => {
 
 const crearSubtema = async (req, res = response ) => {
 
-    const {estado, usuario, ...body} = req.body;
+    const {estado, ...body} = req.body;
 
     const subtemaDB = await Subtema.findOne({nombre: body.nombre});
 
@@ -48,7 +48,7 @@ const crearSubtema = async (req, res = response ) => {
         ...body,
         nombre: body.nombre.toUpperCase(), 
         link:body.link,
-        usuario: req.usuario._id,
+        materia: body.materia,
     }
 
     const subtema = new Subtema(data);
@@ -75,7 +75,9 @@ const actualizarSubtema = async(req, res = response) => {
 //borrar categoria -- estado false
 const borrarSubtema = async(req, res = response) => {
     const {id} = req.params;
-    const subtemaBorrado = await Materia.findByIdAndUpdate(id, {estado: false}, {new: true});
+    //Fisicamente
+    const subtemaBorrado = await Subtema.findByIdAndDelete(id);
+    //const subtemaBorrado = await Materia.findByIdAndUpdate(id, {estado: false}, {new: true});
 
     res.json( subtemaBorrado);
 }

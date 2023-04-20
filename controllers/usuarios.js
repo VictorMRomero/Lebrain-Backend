@@ -23,100 +23,16 @@ const usuariosGet = async(req = request, res = response) => {
     });
 }
 
-const usuarioGetId = async(req, res = response) => {
-    const {id} = req.params;
-    const usuario = await Usuario.findById(id);
 
-    res.json(usuario);
-}
-
-const usuariosPut = async(req, res = response) => {
-    const {id} = req.params;
-    const {_id, password, google, correo, materias, ...resto} = req.body;
-
-    const usuario = await Usuario.findById(id);
-
-    if (password){
-        const salt = bcryptjs.genSaltSync();
-        resto.password = bcryptjs.hashSync(password, salt);
-    }
-
-    if(materias){
-        
-        // Estos subtemas llegan
-        let nuevasMaterias = materias[0].materia;
-
-        let nuevosSubtemas = materias[0].subtemas;
-
-        let idnuevoSubtema = JSON.stringify(nuevosSubtemas[0].subtema);
-
-        //Son los que vamos a guardar
-        let subtemasActualizados = nuevosSubtemas;
-       
-        if((usuario.materias).length){
-
-
-            let total = usuario.materias[0].subtemas.length;
-            console.log(total)
-
-            
-            for(let i = 0; i < total; i++){
-                console.log(i)
-                let existe = JSON.stringify(usuario.materias[0].subtemas[i].subtema);
-                if(existe === idnuevoSubtema){
-                    console.log('es igual');
-                    
-                    return res.status(400).json({ error: 'Uno o más subtemas ya existen' });
-                }
-            }
- 
-            /*
-            if (subtemasExisten) {
-                res.status(400).json({ error: 'Uno o más subtemas ya existen' });
-            }
-*/
-
-            let subtemasAntiguos = usuario.materias[0].subtemas;
-            //console.log(subtemasAntiguos)
-            // Combinar los subtemas antiguos con los nuevos
-            subtemasActualizados = subtemasAntiguos.concat(nuevosSubtemas);
-            
-            nuevasMaterias = {
-              materia: nuevasMaterias,
-              subtemas: subtemasActualizados
-            };
-            //console.log(nuevasMaterias)
-            const newusuario = await Usuario.findByIdAndUpdate(id, {
-              materias: [nuevasMaterias]
-            });
-            res.json(newusuario);
-        } else {
-            nuevasMaterias = {
-              materia: nuevasMaterias,
-              subtemas: subtemasActualizados
-            };
-            const newusuario = await Usuario.findByIdAndUpdate(id, {
-                materias: [nuevasMaterias],
-            });
-            res.json(newusuario);
-        }
-    } else {
-        const usuarioNom = await Usuario.findByIdAndUpdate(id, resto);
-        res.json(usuarioNom);
-    }
-}
-
-
-
-
+//Crear Usuario
 const usuariosPost = async(req, res = response) => {
     
 
+    //Solo se reciben el nombre, correo, password
+    const {nombre, correo, password} = req.body;
 
-    const {nombre, correo, password, rol} = req.body;
 
-
-    const usuario = new Usuario({nombre, correo, password, rol});
+    const usuario = new Usuario({nombre, correo, password});
       // Guardar los cambios en la base de datos
  
 
@@ -137,7 +53,102 @@ const usuariosPost = async(req, res = response) => {
 
 
 
+const usuarioGetId = async(req, res = response) => {
+    const {id} = req.params;
+    const usuario = await Usuario.findById(id);
 
+    res.json(usuario);
+}
+
+
+//actualizar Usuario
+const usuariosPut = async(req, res = response) => {
+
+    try{
+
+        const {id} = req.params;
+        const {_id, password, google, correo, materias, ...resto} = req.body;
+    
+    
+    
+        let materiaNueva = materias[0].materia;
+        let subtemaNuevo = materias[0].subtemas[0].subtema;
+        let calificacion = materias[0].subtemas[0].calificacion;
+        let estado = materias[0].subtemas[0].estado;
+    
+    
+    
+    
+        const exiteMateria = await Usuario.findOne({
+        "_id": id,
+        "materias": {
+            "$elemMatch": { "materia": materiaNueva }
+        }
+        }).exec();
+    
+        if(exiteMateria){
+
+            const existeSubtema = await Usuario.findOne({
+                "_id": id,
+                "materias": {
+                  "$elemMatch": {
+                    "materia": materiaNueva,
+                    "subtemas": {
+                      "$elemMatch": { "subtema": subtemaNuevo }
+                    }
+                  }
+                }
+              }).exec();
+    
+            if(existeSubtema){
+
+    
+                if(calificacion){
+    
+                    await Usuario.updateOne(
+                        { "materias.subtemas.subtema": subtemaNuevo },
+                        { $set: { "materias.$[].subtemas.$[subtema].calificacion": calificacion } },
+                        { arrayFilters: [ { "subtema.subtema": subtemaNuevo } ] }
+                        )
+                }
+                if(estado !== null && estado !== undefined && !isNaN(estado)){
+
+                    await Usuario.updateOne(
+                        { "materias.subtemas.subtema": subtemaNuevo },
+                        { $set: { "materias.$[].subtemas.$[subtema].estado": estado } },
+                        { arrayFilters: [ { "subtema.subtema": subtemaNuevo } ] }
+                        )
+                }
+            } else{//existe Subtema
+
+                await Usuario.updateOne(
+                    { "_id": id, "materias.materia": materiaNueva },
+                    { $addToSet: { "materias.$.subtemas": { "subtema": subtemaNuevo} } }
+                  );
+    
+            }
+        } else {// existeMateria 
+            await Usuario.updateOne(
+                { "_id": id },
+                { $push: { "materias": { "materia": materiaNueva, "subtemas": [] } } }
+              );
+        
+        }
+        
+    
+    
+        const newusuario = await Usuario.findByIdAndUpdate(id, resto);
+        res.json(newusuario);
+
+    } catch {
+        return res.status(400).json({
+            msg: `Error en el body del documento`
+        });
+    }
+
+
+
+}
 
 
 

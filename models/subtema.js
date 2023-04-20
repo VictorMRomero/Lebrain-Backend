@@ -9,21 +9,17 @@ const SubtemaSchema = Schema({
         required: [true, 'El nombre es obligatorio'],
         unique: true
     },
-    estado:{
-        type:Boolean,
-        default: true,
-        required: true
-    },
-    usuario: {
+
+    materia: {
         type: Schema.Types.ObjectId,
-        ref: 'Usuario',
+        ref: 'Materia',
         required: true
     },
 
     link: {
         type: String,
     },
-    disponible: {type: Boolean, default: false}
+
 });
 
 SubtemaSchema.methods.toJSON = function(){

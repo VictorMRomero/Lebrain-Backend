@@ -15,13 +15,10 @@ const UsuarioSchema = Schema({
         type: String,
         required: [true, 'La contraseña es obligatorio']
     },
-    imagen : {
-        type: String,
-    },
     rol: {
         type: String,
-        required: true,
-        emun: ['ADMIN_ROLE','USER_ROLE']
+        emun: ['ADMIN_ROLE','USER_ROLE'],
+        default:'USER_ROLE'
     },
     estado: {
         type: Boolean,
@@ -46,8 +43,13 @@ const UsuarioSchema = Schema({
             estado: {
                 type: Boolean,
                 default: false
+            },
+            calificacion: {
+                type: Number,
+                default: 0
             }
         }]
+        
     }]
 
 });

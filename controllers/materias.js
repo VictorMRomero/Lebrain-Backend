@@ -5,12 +5,11 @@ const {Materia} = require('../models');
 // obtener categorias -- paginado -- total -- populate
 const obtenerMaterias = async(req, res = response) =>{
     const { limite = 5, desde = 0 } = req.query;
-    const query = {estado:true};
+
 
     const [total, materias] = await Promise.all([
-        Materia.countDocuments(query),
-        Materia.find(query)
-            .populate('usuario', 'nombre')
+        Materia.countDocuments(),
+        Materia.find()
             .skip(Number(desde))
             .limit(Number(limite))
     ]);
@@ -23,12 +22,13 @@ const obtenerMaterias = async(req, res = response) =>{
 // obtener categoria id- populate
 const obtenerMateria = async(req, res = response) => {
     const {id} = req.params;
-    const materia = await Materia.findById(id).populate('usuario', 'nombre');
+    const materia = await Materia.findById(id); //.populate('usuario', 'nombre');
 
     res.json(materia);
 }
 
 
+//Crear una materia
 const crearMateria = async (req, res = response ) => {
 
     const nombre = req.body.nombre.toUpperCase();
@@ -60,68 +60,30 @@ const crearMateria = async (req, res = response ) => {
 
 
 
-//actualizar categoria
+//actualizar Materia
 const actualizarMateria = async(req, res = response) => {
     const {id} = req.params;
-    const {estado, usuario, subtemas, ...resto} = req.body;
+    const {nombre, ...resto} = req.body;
+    resto.nombre = nombre.toUpperCase();
 
 
-    const materia = await Materia.findById(id);
+    if(nombre){
+        const nombreDB = await Materia.findOne({nombre});
 
-
-
-
-
-    if(subtemas){
-
-
-        //Son los que vamos a guardar
-        let subtemasActualizados = JSON.stringify(subtemas);
-        let subtemasAntiguos = materia.subtemas;
-        let total = materia.subtemas.length;
-        console.log(subtemasAntiguos)
-        for(let i=0; i < total; i++){
-            let viejaMateria = JSON.stringify(materia.subtemas[i].subtema)
-
-            let nuevaMateria = JSON.stringify(subtemas[0].subtema);
-
-
-            if(nuevaMateria === viejaMateria){
-                console.log('Son iguales')
-                return res.status(400).json({ error: 'Subtema existe' });
-            }
+        if(nombreDB) {
+            return res.status(400).json({
+                msg: `la materia ${nombreDB.nombre}, ya existe`
+            });
         }
-
-
-        // Combinar los subtemas antiguos con los nuevos
-
-        
-        console.log(subtemasActualizados);
-        //console.log(nuevasMaterias)
-        
-        
-        const newMateria = await Materia.findByIdAndUpdate(id, {
-            subtemas: [subtemasActualizados]
-          });
-        res.json(newMateria)
-        
-    } else {
     }
-
-
-
-
-
-
-
-
-
-
+    resto.nombre = nombre;
     const newMateria = await Materia.findByIdAndUpdate(id, resto);
 
 
     
-    res.json(materia);
+    res.json(newMateria);
+
+
 }
 
 
@@ -130,8 +92,9 @@ const actualizarMateria = async(req, res = response) => {
 //borrar categoria -- estado false
 const borrarMateria = async(req, res = response) => {
     const {id} = req.params;
-    const materiaBorrada = await Materia.findByIdAndUpdate(id, {estado: false}, {new: true});
-
+    //const materiaBorrada = await Materia.findByIdAndUpdate(id, {estado: false}, {new: true});
+    //Fisicamente
+    const materiaBorrada = await Materia.findByIdAndDelete(id);
     res.json( materiaBorrada);
 }
 

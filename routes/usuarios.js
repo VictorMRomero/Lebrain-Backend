@@ -25,6 +25,19 @@ const router = Router();
 //Obtener los usuarios
 router.get('/', usuariosGet);
 
+
+//Crear usuario
+router.post('/', [
+        check('nombre', 'El nombre es obligatorio').not().isEmpty(),
+        check('password', 'El pasword es obligatorio minimo 8 caracteres').isLength({min: 8}),
+        check('correo', 'El correo no es valido').isEmail(),
+        check('correo').custom(exiteEmail),
+        //check('rol', 'No es un rol valido').isIn(['ADMIN_ROLE', 'USER_ROLE']),
+        validarCampos
+] ,usuariosPost);    
+
+
+
 //Obtener los usuarios por id
 router.get('/:id', [
         check('id', 'No es un id valido').isMongoId(),
@@ -32,25 +45,15 @@ router.get('/:id', [
         validarCampos
 ],usuarioGetId)
 
-//Obtener usuario por id
+
+//actualizarUsuario
 router.put('/:id',[
         check('id', 'No es un id valido').isMongoId(),
         check('id').custom(exiteUsuarioID),
-        check('rol').custom(esRolValido),
+
         validarCampos
 ], usuariosPut);    
 
-//actualizar usuario
-router.post('/', [
-        check('nombre', 'El nombre es obligatorio').not().isEmpty(),
-        check('password', 'El pasword es obligatorio minimo 8 caracteres').isLength({min: 8}),
-        check('correo', 'El correo no es valido').isEmail(),
-        check('correo').custom(exiteEmail),
-        //check('rol', 'No es un rol valido').isIn(['ADMIN_ROLE', 'USER_ROLE']),
-        check('rol').custom(esRolValido),
-
-        validarCampos
-] ,usuariosPost);    
 
 
 
