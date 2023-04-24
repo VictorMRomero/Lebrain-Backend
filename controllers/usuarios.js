@@ -69,76 +69,81 @@ const usuariosPut = async(req, res = response) => {
         const {id} = req.params;
         const {_id, password, google, correo, materias, ...resto} = req.body;
     
-    
-    
-        let materiaNueva = materias[0].materia;
-        let subtemaNuevo = materias[0].subtemas[0].subtema;
-        let calificacion = materias[0].subtemas[0].calificacion;
-        let estado = materias[0].subtemas[0].estado;
-    
-    
-    
-    
-        const exiteMateria = await Usuario.findOne({
-        "_id": id,
-        "materias": {
-            "$elemMatch": { "materia": materiaNueva }
-        }
-        }).exec();
-    
-        if(exiteMateria){
+        if(materias){
+            
+            let materiaNueva = materias[0].materia; //idmateria
+            let subtemaCompleto = materias[0].subtemas; //objeto subtema
+            let subtemaNuevo = materias[0].subtemas[0].subtema; //id subtema
+            let calificacion = materias[0].subtemas[0].calificacion; //calificacion que llega
+            let estado = materias[0].subtemas[0].estado; //estado que llega
 
-            const existeSubtema = await Usuario.findOne({
-                "_id": id,
-                "materias": {
-                  "$elemMatch": {
-                    "materia": materiaNueva,
-                    "subtemas": {
-                      "$elemMatch": { "subtema": subtemaNuevo }
-                    }
-                  }
-                }
-              }).exec();
-    
-            if(existeSubtema){
-
-    
-                if(calificacion){
-    
-                    await Usuario.updateOne(
-                        { "materias.subtemas.subtema": subtemaNuevo },
-                        { $set: { "materias.$[].subtemas.$[subtema].calificacion": calificacion } },
-                        { arrayFilters: [ { "subtema.subtema": subtemaNuevo } ] }
-                        )
-                }
-                if(estado !== null && estado !== undefined && !isNaN(estado)){
-
-                    await Usuario.updateOne(
-                        { "materias.subtemas.subtema": subtemaNuevo },
-                        { $set: { "materias.$[].subtemas.$[subtema].estado": estado } },
-                        { arrayFilters: [ { "subtema.subtema": subtemaNuevo } ] }
-                        )
-                }
-            } else{//existe Subtema
-
-                await Usuario.updateOne(
-                    { "_id": id, "materias.materia": materiaNueva },
-                    { $addToSet: { "materias.$.subtemas": { "subtema": subtemaNuevo} } }
-                  );
-    
+        
+        
+            const exiteMateria = await Usuario.findOne({
+            "_id": id,
+            "materias": {
+                "$elemMatch": { "materia": materiaNueva }
             }
-        } else {// existeMateria 
-            await Usuario.updateOne(
-                { "_id": id },
-                { $push: { "materias": { "materia": materiaNueva, "subtemas": [] } } }
-              );
+            }).exec();
         
+            if(exiteMateria){
+    
+                const existeSubtema = await Usuario.findOne({
+                    "_id": id,
+                    "materias": {
+                      "$elemMatch": {
+                        "materia": materiaNueva,
+                        "subtemas": {
+                          "$elemMatch": { "subtema": subtemaNuevo }
+                        }
+                      }
+                    }
+                  }).exec();
+        
+                if(existeSubtema){
+
+                    await Usuario.updateOne(
+                        { 
+                          "_id": id,
+                          "materias.materia": materiaNueva,
+                          "materias.subtemas.subtema": subtemaNuevo
+                        },
+                        { 
+                          $set: { 
+                            "materias.$[].subtemas.$[subtema].calificacion": calificacion,
+                            "materias.$[].subtemas.$[subtema].estado": estado 
+                          } 
+                        },
+                        { arrayFilters: [ { "subtema.subtema": subtemaNuevo } ] }
+                      );
+                    
+                      
+                } else{//existe Subtema
+    
+                    await Usuario.updateOne(
+                        { "_id": id, "materias.materia": materiaNueva },
+                        { $addToSet: { "materias.$.subtemas": { "subtema": subtemaNuevo} } }
+                      );
+        
+                }
+            } else {// existeMateria 
+                await Usuario.updateOne(
+                    { "_id": id },
+                    { $push: { "materias": { "materia": materiaNueva, "subtemas": subtemaCompleto } } }
+                  );
+            
+            }
+        } 
+        
+        if (password){
+            const salt = bcryptjs.genSaltSync();
+            resto.password = bcryptjs.hashSync(password, salt);
         }
         
-    
-    
         const newusuario = await Usuario.findByIdAndUpdate(id, resto);
         res.json(newusuario);
+    
+        
 
     } catch {
         return res.status(400).json({
