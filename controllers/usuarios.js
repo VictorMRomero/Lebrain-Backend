@@ -67,8 +67,10 @@ const usuariosPut = async(req, res = response) => {
     try{
 
         const {id} = req.params;
-        const {_id, password, google, correo, materias, ...resto} = req.body;
-    
+        const {_id, password, google, correo, materias, eliminar, ...resto} = req.body;
+        
+
+
         if(materias){
             
             let materiaNueva = materias[0].materia; //idmateria
@@ -135,10 +137,20 @@ const usuariosPut = async(req, res = response) => {
             }
         } 
         
+        if(eliminar){
+            await Usuario.updateOne(
+                { "_id": id },
+                { $pull: { "materias": { "materia": eliminar } } }
+                );
+                console.log('hecho')
+        }
+
         if (password){
             const salt = bcryptjs.genSaltSync();
             resto.password = bcryptjs.hashSync(password, salt);
         }
+
+
         
         const newusuario = await Usuario.findByIdAndUpdate(id, resto);
         res.json(newusuario);
