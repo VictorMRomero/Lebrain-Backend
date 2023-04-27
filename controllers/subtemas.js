@@ -33,7 +33,7 @@ const obtenerSubtema = async(req, res = response) => {
 
 const crearSubtema = async (req, res = response ) => {
 
-    const {estado, ...body} = req.body;
+    const {...body} = req.body;
 
     const subtemaDB = await Subtema.findOne({nombre: body.nombre});
 
